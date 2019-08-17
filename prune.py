@@ -67,7 +67,7 @@ def prune(model,cfg,percent):
             m1.running_var = m0.running_var[idx1].clone()
             layer_id_in_cfg += 1
 
-        elif isinstance(m0, nn.Conv1d):
+        elif isinstance(m0, nn.Conv2d):
             if layer_id_in_cfg == 0:
                 idx0 = np.squeeze(np.argwhere(np.asarray(start_mask.cpu().numpy())))
                 idx1 = np.squeeze(np.argwhere(np.asarray(cfg_mask[layer_id_in_cfg].cpu().numpy())))
