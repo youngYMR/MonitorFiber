@@ -13,6 +13,7 @@ prune.py --根据BN层的gamma值作为特征选择依据
 
 参考论文
 --《Deformable Convolutional Networks》
+论文原作者github连接：https://github.com/oeway/pytorch-deform-conv
 DAS硬件系统采集时空数据的时候，会产生偏移量，利用可变形卷积网络去学习这些偏移量
 
 --《Networks Slimming-Learning Efficient Convolutional Networks through Network Slimming》
