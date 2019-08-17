@@ -20,13 +20,13 @@ def prune(model,cfg,percent):
 
     total = 0
     for m in model.modules():
-        if isinstance(m, nn.BatchNorm1d):
+        if isinstance(m, nn.BatchNorm2d):
             total += m.weight.data.shape[0]  # 一共有total个卷积channels
 
     bn = torch.zeros(total)
     index = 0
     for m in model.modules():
-        if isinstance(m, nn.BatchNorm1d):
+        if isinstance(m, nn.BatchNorm2d):
             size = m.weight.data.shape[0]
             bn[index:(index + size)] = m.weight.data.abs().clone()  # 输出gamma，伸缩因子
             index += size
@@ -39,7 +39,7 @@ def prune(model,cfg,percent):
     cfg = []
     cfg_mask = []
     for k, m in enumerate(model.modules()):
-        if isinstance(m, nn.BatchNorm1d):
+        if isinstance(m, nn.BatchNorm2d):
             weight_copy = m.weight.data.clone()
             mask = weight_copy.abs().gt(thre).float().cuda()  # 伸缩因子大于阈值的为1.0,否则为0.0
             pruned = pruned + mask.shape[0] - torch.sum(mask)
@@ -47,7 +47,7 @@ def prune(model,cfg,percent):
             m.bias.data.mul_(mask)
             cfg.append(int(torch.sum(mask)))  # 记录剪枝后cfg，[19,19,36,31,70,84]
             cfg_mask.append(mask.clone())  # 记录剪枝前cfg,是个BN通道张量，[0,0,0,1,1,,0...,1,0]
-        elif isinstance(m, nn.AvgPool1d):
+        elif isinstance(m, nn.AvgPool2d):
             cfg.append('A')
 
     model_iter = nn.Sequential(*list(model.children())[:1])[0]  # 获取CNN迭代部分
@@ -59,7 +59,7 @@ def prune(model,cfg,percent):
 
     for [m0, m1] in zip(model_iter, newmodel_iter):
 
-        if isinstance(m0, nn.BatchNorm1d):
+        if isinstance(m0, nn.BatchNorm2d):
             idx1 = np.squeeze(np.argwhere(np.asarray(cfg_mask[layer_id_in_cfg].cpu().numpy())))
             m1.weight.data = m0.weight.data[idx1].clone()
             m1.bias.data = m0.bias.data[idx1].clone()
@@ -71,19 +71,19 @@ def prune(model,cfg,percent):
             if layer_id_in_cfg == 0:
                 idx0 = np.squeeze(np.argwhere(np.asarray(start_mask.cpu().numpy())))
                 idx1 = np.squeeze(np.argwhere(np.asarray(cfg_mask[layer_id_in_cfg].cpu().numpy())))
-                w = m0.weight.data[:, :, :]
-                w = w[idx1, :, :]
+                w = m0.weight.data[:,:, :, :]
+                w = w[:,idx1, :, :]
                 m1.weight.data = w.clone()
                 print('In shape: ,Out shape:', 1, idx1.shape)
             else:
                 idx0 = np.squeeze(np.argwhere(np.asarray(cfg_mask[layer_id_in_cfg - 1].cpu().numpy())))
                 idx1 = np.squeeze(np.argwhere(np.asarray(cfg_mask[layer_id_in_cfg].cpu().numpy())))
 
-                w = m0.weight.data[:, idx0, :]
+                w = m0.weight.data[:, idx0, :,:]
                 if len(w.size()) == 2:
                     w = w.unsqueeze(1)
 
-                w = w[idx1, :, :].clone()
+                w = w[idx1, :, :, :].clone()
                 m1.weight.data = w.clone()
                 print('In shape: ,Out shape:', idx0.shape, idx1.shape)
                 # print('In shape: {:d} Out shape:{:d}'.format(idx0.shape[0], idx1.shape[0]))
