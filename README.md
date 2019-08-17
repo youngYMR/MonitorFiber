@@ -17,4 +17,4 @@ prune.py --根据BN层的gamma值作为特征选择依据
 DAS硬件系统采集时空数据的时候，会产生偏移量，利用可变形卷积网络去学习这些偏移量
 
 --《Networks Slimming-Learning Efficient Convolutional Networks through Network Slimming》
-利用BN层gamma因子，作为channel的权重，做特征选择
+利用BN层gamma因子，作为channel的权重，做特征选择，裁剪网络后，迁移特征权重，重新训练模型。达到模型压缩，提高模型计算速度。
